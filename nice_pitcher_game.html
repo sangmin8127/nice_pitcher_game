@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nice Pitcher - 숫자 야구 게임</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .logo {
+            margin-bottom: 20px;
+        }
+
+        .baseball {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            border: 3px solid #333;
+            margin: 0 auto 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .baseball::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 60px;
+            background: #FF0000;
+            border-radius: 2px;
+        }
+
+        .baseball::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 15px;
+            width: 50px;
+            height: 2px;
+            background: #FF0000;
+            border-radius: 2px;
+            transform: rotate(-45deg);
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .game-info {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .attempts {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .current-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2E7D32;
+            margin-bottom: 10px;
+        }
+
+        .result {
+            font-size: 16px;
+            color: #666;
+            min-height: 20px;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        .number-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .number-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .keypad button {
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            background: #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .keypad button:hover {
+            background: #e0e0e0;
+        }
+
+        .keypad button:active {
+            transform: scale(0.95);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        .btn-secondary {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #d32f2f;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .history {
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .strike {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .ball {
+            color: #FF9800;
+            font-weight: bold;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 300px;
+            width: 90%;
+        }
+
+        .modal h2 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+        }
+
+        .modal p {
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 20px;
+            }
+
+            .keypad {
+                gap: 8px;
+            }
+
+            .keypad button {
+                padding: 12px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-container">
+        <div class="logo">
+            <div class="baseball"></div>
+            <div class="title">Nice Pitcher</div>
+            <div class="subtitle">숫자 야구 게임</div>
+        </div>
+
+        <div class="game-info">
+            <div class="attempts">시도 횟수: <span id="attempts">0</span>/10</div>
+            <div class="current-number" id="currentNumber">---</div>
+            <div class="result" id="result">3자리 숫자를 입력하세요</div>
+        </div>
+
+        <div class="input-section">
+            <input type="text" id="numberInput" class="number-input" placeholder="3자리 숫자 입력" maxlength="3" readonly>
+
+            <div class="keypad">
+                <button onclick="addNumber(1)">1</button>
+                <button onclick="addNumber(2)">2</button>
+                <button onclick="addNumber(3)">3</button>
+                <button onclick="addNumber(4)">4</button>
+                <button onclick="addNumber(5)">5</button>
+                <button onclick="addNumber(6)">6</button>
+                <button onclick="addNumber(7)">7</button>
+                <button onclick="addNumber(8)">8</button>
+                <button onclick="addNumber(9)">9</button>
+                <button onclick="clearInput()">지우기</button>
+                <button onclick="addNumber(0)">0</button>
+                <button onclick="backspace()">←</button>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="submitGuess()" id="submitBtn">확인</button>
+                <button class="btn btn-secondary" onclick="newGame()">새 게임</button>
+            </div>
+        </div>
+
+        <div class="history" id="history">
+            <div style="text-align: center; color: #999;">게임 기록이 여기에 표시됩니다</div>
+        </div>
+    </div>
+
+    <!-- 승리 모달 -->
+    <div id="winModal" class="modal">
+        <div class="modal-content">
+            <h2>🎉 축하합니다!</h2>
+            <p id="winMessage">정답을 맞추셨습니다!</p>
+            <button class="btn btn-primary" onclick="closeModal()">확인</button>
+        </div>
+    </div>
+
+    <!-- 패배 모달 -->
+    <div id="loseModal" class="modal">
+        <div class="modal-content">
+            <h2>😭 게임 오버</h2>
+            <p id="loseMessage">정답은 <span id="correctAnswer"></span>이었습니다.</p>
+            <button class="btn btn-primary" onclick="closeModal()">확인</button>
+        </div>
+    </div>
+
+    <script>
+        class BaseballGame {
+            constructor() {
+                this.targetNumber = this.generateRandomNumber();
+                this.attempts = 0;
+                this.maxAttempts = 10;
+                this.gameHistory = [];
+                this.isGameOver = false;
+                this.updateDisplay();
+            }
+
+            generateRandomNumber() {
+                let numbers = [];
+                while (numbers.length < 3) {
+                    let num = Math.floor(Math.random() * 10);
+                    if (!numbers.includes(num)) {
+                        numbers.push(num);
+                    }
+                }
+                return numbers.join('');
+            }
+
+            checkGuess(guess) {
+                let strikes = 0;
+                let balls = 0;
+
+                for (let i = 0; i < 3; i++) {
+                    if (guess[i] === this.targetNumber[i]) {
+                        strikes++;
+                    } else if (this.targetNumber.includes(guess[i])) {
+                        balls++;
+                    }
+                }
+
+                return { strikes, balls };
+            }
+
+            makeGuess(guess) {
+                if (this.isGameOver) return;
+
+                this.attempts++;
+                const result = this.checkGuess(guess);
+
+                this.gameHistory.push({
+                    guess: guess,
+                    strikes: result.strikes,
+                    balls: result.balls
+                });
+
+                this.updateDisplay();
+                this.updateHistory();
+
+                if (result.strikes === 3) {
+                    this.isGameOver = true;
+                    this.showWinModal();
+                } else if (this.attempts >= this.maxAttempts) {
+                    this.isGameOver = true;
+                    this.showLoseModal();
+                }
+            }
+
+            updateDisplay() {
+                document.getElementById('attempts').textContent = this.attempts;
+
+                if (this.gameHistory.length > 0) {
+                    const lastResult = this.gameHistory[this.gameHistory.length - 1];
+                    document.getElementById('result').innerHTML =
+                        `<span class="strike">${lastResult.strikes}S</span> <span class="ball">${lastResult.balls}B</span>`;
+                } else {
+                    document.getElementById('result').textContent = '3자리 숫자를 입력하세요';
+                }
+            }
+
+            updateHistory() {
+                const historyElement = document.getElementById('history');
+                historyElement.innerHTML = '';
+
+                this.gameHistory.forEach((item, index) => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    historyItem.innerHTML = `
+                        <span>${index + 1}. ${item.guess}</span>
+                        <span><span class="strike">${item.strikes}S</span> <span class="ball">${item.balls}B</span></span>
+                    `;
+                    historyElement.appendChild(historyItem);
+                });
+            }
+
+            showWinModal() {
+                document.getElementById('winMessage').textContent =
+                    `${this.attempts}번 만에 정답을 맞추셨습니다!`;
+                document.getElementById('winModal').style.display = 'block';
+            }
+
+            showLoseModal() {
+                document.getElementById('correctAnswer').textContent = this.targetNumber;
+                document.getElementById('loseModal').style.display = 'block';
+            }
+
+            newGame() {
+                this.targetNumber = this.generateRandomNumber();
+                this.attempts = 0;
+                this.gameHistory = [];
+                this.isGameOver = false;
+                this.updateDisplay();
+                document.getElementById('history').innerHTML =
+                    '<div style="text-align: center; color: #999;">게임 기록이 여기에 표시됩니다</div>';
+                document.getElementById('numberInput').value = '';
+                document.getElementById('currentNumber').textContent = '---';
+            }
+        }
+
+        // 게임 인스턴스 생성
+        let game = new BaseballGame();
+
+        // UI 함수들
+        function addNumber(num) {
+            if (game.isGameOver) return;
+
+            const input = document.getElementById('numberInput');
+            const currentValue = input.value;
+
+            if (currentValue.length < 3 && !currentValue.includes(num.toString())) {
+                input.value = currentValue + num.toString();
+                document.getElementById('currentNumber').textContent = input.value.padEnd(3, '-');
+            }
+        }
+
+        function clearInput() {
+            document.getElementById('numberInput').value = '';
+            document.getElementById('currentNumber').textContent = '---';
+        }
+
+        function backspace() {
+            const input = document.getElementById('numberInput');
+            input.value = input.value.slice(0, -1);
+            document.getElementById('currentNumber').textContent = input.value.padEnd(3, '-');
+        }
+
+        function submitGuess() {
+            if (game.isGameOver) return;
+
+            const guess = document.getElementById('numberInput').value;
+
+            if (guess.length !== 3) {
+                alert('3자리 숫자를 입력해주세요.');
+                return;
+            }
+
+            // 중복 숫자 체크
+            const uniqueDigits = new Set(guess).size;
+            if (uniqueDigits !== 3) {
+                alert('중복되지 않는 3자리 숫자를 입력해주세요.');
+                return;
+            }
+
+            game.makeGuess(guess);
+            clearInput();
+        }
+
+        function newGame() {
+            game.newGame();
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('winModal').style.display = 'none';
+            document.getElementById('loseModal').style.display = 'none';
+        }
+
+        // 키보드 이벤트 처리
+        document.addEventListener('keydown', function (event) {
+            if (game.isGameOver) return;
+
+            if (event.key >= '0' && event.key <= '9') {
+                addNumber(parseInt(event.key));
+            } else if (event.key === 'Enter') {
+                submitGuess();
+            } else if (event.key === 'Backspace') {
+                backspace();
+            } else if (event.key === 'Escape') {
+                clearInput();
+            }
+        });
+
+        // 모달 외부 클릭 시 닫기
+        document.addEventListener('click', function (event) {
+            if (event.target.className === 'modal') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+
+</html>
